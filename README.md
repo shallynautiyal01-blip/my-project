@@ -1,1 +1,6 @@
-# my-project
+The project “Student Presence Behavior Analysis Using C Programming” focuses on analyzing student attendance data to identify behavioral patterns and academic risk.
+The system has been fully implemented as a mini ERP-style console application. The system allows role-based interaction where teachers can manage student records and perform analysis, while students can view their individual attendance reports.
+The system reads student data from a file and stores it using structures and arrays. It performs multiple analytical operations such as calculating attendance percentage, detecting consecutive absences, and identifying irregular attendance patterns. Based on these metrics, students are classified into categories such as Regular, Irregular, and At Risk.
+
+Additional features implemented in this phase include sorting student records based on attendance percentage, dynamic data entry by teachers, and file handling for both input and output operations. The system also ensures better user interaction through a menu-driven interface. 
+This project demonstrates the application of C programming fundamentals including structures, arrays, strings, functions, file handling, and modular programming in solving a real-world problem.
