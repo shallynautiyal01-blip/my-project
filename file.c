@@ -1,0 +1,302 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX 100
+#define DAYS 10
+
+struct Student {
+    int roll;
+    char name[50];
+    char attendance[DAYS + 1];
+};
+
+// ---------------- FILE HANDLING ----------------
+
+int readFromFile(struct Student s[]) {
+    FILE *fp = fopen("student.txt", "r");
+
+    if (fp == NULL) {
+        printf("\n File not found!\n");
+        return 0;
+    }
+
+    int count = 0;
+
+    while (fscanf(fp, "%d %s %s",
+                  &s[count].roll,
+                  s[count].name,
+                  s[count].attendance) != EOF) {
+        count++;
+    }
+
+    fclose(fp);
+    return count;
+}
+
+void saveToFile(struct Student s[], int n) {
+    FILE *fp = fopen("report.txt", "w");
+
+    for (int i = 0; i < n; i++) {
+        fprintf(fp, "%d %s %s\n", s[i].roll, s[i].name, s[i].attendance);
+    }
+
+    fclose(fp);
+    printf("\nReport saved successfully!\n");
+}
+
+// ---------------- ANALYSIS ----------------
+
+float calculatePercentage(char att[]) {
+    int present = 0;
+
+    for (int i = 0; i < DAYS; i++) {
+        if (att[i] == 'P' || att[i] == 'p')
+            present++;
+    }
+
+    return (present * 100.0) / DAYS;
+}
+
+int maxConsecutiveAbsence(char att[]) {
+    int max = 0, count = 0;
+
+    for (int i = 0; i < DAYS; i++) {
+        if (att[i] == 'A' || att[i] == 'a') {
+            count++;
+            if (count > max)
+                max = count;
+        } else {
+            count = 0;
+        }
+    }
+
+    return max;
+}
+
+int irregularityScore(char att[]) {
+    int changes = 0;
+
+    for (int i = 1; i < DAYS; i++) {
+        if (att[i] != att[i - 1])
+            changes++;
+    }
+
+    return changes;
+}
+
+void classifyStudent(float percent, int maxAbs, int irregular) {
+    if (percent >= 75) {
+        if (maxAbs >= 3 || irregular > 5)
+            printf("Regular (⚠ Warning)\n");
+        else
+            printf("Regular\n");
+    }
+    else if (percent >= 50)
+        printf("Irregular\n");
+    else
+        printf("At Risk\n");
+}
+
+// ----------- DISPLAY REPORT -----------
+
+void printReport(struct Student s) {
+    float percent = calculatePercentage(s.attendance);
+    int maxAbs = maxConsecutiveAbsence(s.attendance);
+    int irregular = irregularityScore(s.attendance);
+
+    printf("\n----------------------------------\n");
+    printf("Roll No : %d\n", s.roll);
+    printf("Name    : %s\n", s.name);
+    printf("Percent : %.2f%%\n", percent);
+    printf("Max Abs : %d\n", maxAbs);
+    printf("Irreg   : %d\n", irregular);
+    printf("Status  : ");
+    classifyStudent(percent, maxAbs, irregular);
+}
+
+// ----------- DISPLAY RECORD ----------- 
+
+void showRecords(struct Student s[], int n) {
+
+    printf("\n--- STUDENT RECORDS ---\n");
+
+    for (int i = 0; i < n; i++) {
+        printf("%d %s %s\n",
+               s[i].roll,
+               s[i].name,
+               s[i].attendance);
+    }
+}
+
+// ---------------- SORTING ----------------
+
+void sortByPercentage(struct Student s[], int n) {
+
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+
+            float p1 = calculatePercentage(s[j].attendance);
+            float p2 = calculatePercentage(s[j + 1].attendance);
+
+            if (p1 < p2) {
+                struct Student temp = s[j];
+                s[j] = s[j + 1];
+                s[j + 1] = temp;
+            }
+        }
+    }
+
+    printf("\n Students sorted by attendance (High → Low)\n");
+
+    for (int i = 0; i < n; i++) {
+        printReport(s[i]);
+    }
+}
+
+// ---------------- ADD DATA ----------------
+
+void addRecordsToFile() {
+    FILE *fp = fopen("student.txt", "a");
+
+    if (fp == NULL) {
+        printf("Error opening file!\n");
+        return;
+    }
+
+    int roll;
+    char name[50];
+    char attendance[DAYS + 1];
+
+    printf("\nEnter Roll No (-1 to stop): ");
+
+    while (1) {
+        scanf("%d", &roll);
+
+        if (roll == -1) break;
+
+        printf("Name: ");
+        scanf("%s", name);
+
+        printf("Attendance: ");
+        scanf("%s", attendance);
+
+        fprintf(fp, "%d %s %s\n", roll, name, attendance);
+
+        printf("\nNext Roll (-1 to stop): ");
+    }
+
+    fclose(fp);
+    printf("\nRecords added!\n");
+
+
+
+    printf("\nPress Enter to return to Teacher Menu...");
+    while (getchar() != '\n');    //clear buffer
+    getchar();                    //wait for user
+}
+
+// ---------------- STUDENT MODE ----------------
+
+void studentView(struct Student s[], int n) {
+    int roll;
+    printf("\nEnter your Roll Number: ");
+    scanf("%d", &roll);
+
+    for (int i = 0; i < n; i++) {
+        if (s[i].roll == roll) {
+            printReport(s[i]);
+            return;
+        }
+    }
+
+    printf("\n Record not found!\n");
+}
+
+// ---------------- TEACHER MENU ----------------
+
+void teacherMenu(struct Student s[], int *n) {
+    int choice;
+
+    while (1) {
+        printf("\n--- TEACHER MENU ---\n");
+        printf("1. Show Student Record\n");
+        printf("2. Show Report\n");
+        printf("3. Add Records\n");
+        printf("4. Save Report\n");
+        printf("5. Sort by Attendance\n");
+        printf("0. Back\n");
+
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                *n = readFromFile(s);
+                showRecords(s,*n);
+                break;
+
+            case 2:
+                for (int i = 0; i < *n; i++)
+                    printReport(s[i]);
+                break;
+
+            case 3:
+                addRecordsToFile();
+                *n = readFromFile(s);
+                break;
+
+            case 4:
+                saveToFile(s, *n);
+                break;
+
+            case 5:
+                sortByPercentage(s, *n);
+                break;
+
+            case 0:
+                return;
+
+            default:
+                printf("Invalid choice!\n");
+        }
+    }
+}
+
+// ---------------- MAIN ----------------
+
+int main() {
+    struct Student s[MAX];
+    int n = 0;
+    int choice;
+
+    printf("\n===== ATTENDANCE ERP SYSTEM =====\n");
+
+    while (1) {
+        printf("\n--- MAIN MENU ---\n");
+        printf("1. Teacher Mode\n");
+        printf("2. Student Mode\n");
+        printf("0. Exit\n");
+
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        if (choice == 1) {
+            teacherMenu(s, &n);
+        }
+        else if (choice == 2) {
+            if (n == 0)
+                n = readFromFile(s);
+
+            studentView(s, n);
+        }
+        else if (choice == 0) {
+            printf("\nExiting...\n");
+            break;
+        }
+        else {
+            printf("Invalid choice!\n");
+        }
+    }
+
+    return 0;
+}
